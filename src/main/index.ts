@@ -1,12 +1,17 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { registerBusIpc } from './ipc/registerBus'
+
+let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 900,
     height: 670,
+    minWidth: 900,
+    minHeight: 670,
+    resizable: true,
     show: false,
     autoHideMenuBar: true,
     icon: join(__dirname, '../../build/icon.png'),
@@ -16,13 +21,14 @@ function createWindow(): void {
       sandbox: false
     }
   })
-  mainWindow.setTitle('BMS Nexus')
+  mainWindow = win
+  win.setTitle('BMS Nexus')
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+  win.on('ready-to-show', () => {
+    win.show()
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  win.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
@@ -30,10 +36,14 @@ function createWindow(): void {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    win.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    win.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  win.on('closed', () => {
+    mainWindow = null
+  })
 }
 
 // This method will be called when Electron has finished
@@ -52,6 +62,24 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.handle('window:minimize', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.minimize()
+  })
+  ipcMain.handle('window:toggle-maximize', (event) => {
+    const currentWindow = BrowserWindow.fromWebContents(event.sender)
+    if (!currentWindow) return false
+    if (currentWindow.isMaximized()) {
+      currentWindow.unmaximize()
+      return false
+    }
+    currentWindow.maximize()
+    return true
+  })
+  ipcMain.handle('window:close', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.close()
+  })
+
+  registerBusIpc(() => mainWindow)
 
   createWindow()
 

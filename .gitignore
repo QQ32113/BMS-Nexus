@@ -145,3 +145,6 @@ out
 .eslintcache
 *.log*
 
+# Reference clone (EcuBus-Pro 等)
+_ref/
+

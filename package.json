@@ -28,6 +28,7 @@
     "electron-updater": "^6.3.9",
     "element-plus": "^2.13.5",
     "naive-ui": "^2.44.1",
+    "serialport": "^13.0.0",
     "vue-router": "^5.0.4"
   },
   "devDependencies": {

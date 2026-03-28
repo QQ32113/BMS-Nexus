@@ -1,0 +1,11 @@
+VERSION "Sample minimal DBC for BmsNexus tests"
+
+NS_ :
+	NS_DESC_
+
+BS_:
+
+BU_: ECU
+
+BO_ 291 TestMsg: 8 ECU
+ SG_ TestSignal : 0|8@1+ (1,0) [0|255] "" ECU

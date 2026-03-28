@@ -29,6 +29,13 @@
   --color-background-mute: var(--ev-c-black-mute);
 
   --color-text: var(--ev-c-text-1);
+
+  /* 工具主界面（与 Ribbon 浅色工作区一致，类 EcuBus / Fluent） */
+  --app-workspace-bg: #f3f2f1;
+  --app-surface: #ffffff;
+  --app-text: #201f1e;
+  --app-text-muted: #605e5c;
+  --app-border: #edebe9;
 }
 
 *,
@@ -45,8 +52,8 @@ ul {
 
 body {
   min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
+  color: var(--app-text);
+  background: var(--app-workspace-bg);
   line-height: 1.6;
   font-family:
     Inter,
