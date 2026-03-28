@@ -1,12 +1,35 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import type { AppAPI } from './types'
+import type { CanFrame } from '../shared/dbcTypes'
 
-// Custom APIs for renderer
-const api = {}
+const api: AppAPI = {
+  windowControls: {
+    minimize: () => ipcRenderer.invoke('window:minimize'),
+    toggleMaximize: () => ipcRenderer.invoke('window:toggle-maximize') as Promise<boolean>,
+    close: () => ipcRenderer.invoke('window:close')
+  },
+  canBus: {
+    listPorts: () => ipcRenderer.invoke('serial:list'),
+    connect: (opts) => ipcRenderer.invoke('can:connect', opts),
+    disconnect: () => ipcRenderer.invoke('can:disconnect'),
+    send: (payload) => ipcRenderer.invoke('can:send', payload),
+    onFrame: (cb: (frame: CanFrame) => void) => {
+      const listener = (_event: unknown, data: CanFrame): void => {
+        cb(data)
+      }
+      ipcRenderer.on('can:frame', listener)
+      return () => {
+        ipcRenderer.removeListener('can:frame', listener)
+      }
+    }
+  },
+  dbc: {
+    openDialog: () => ipcRenderer.invoke('dbc:openDialog'),
+    parseFile: (filePath) => ipcRenderer.invoke('dbc:parseFile', filePath)
+  }
+}
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
@@ -15,8 +38,8 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
+  // @ts-expect-error preload
   window.electron = electronAPI
-  // @ts-ignore (define in dts)
+  // @ts-expect-error preload
   window.api = api
 }
